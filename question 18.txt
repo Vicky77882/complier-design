@@ -1,0 +1,37 @@
+%{
+#include <stdio.h>
+
+int macro_count = 0;
+int include_count = 0;
+%}
+
+%%
+
+"#define"[ \t]+[a-zA-Z_][a-zA-Z0-9_]*  { macro_count++; }
+"#include"[ \t]*<[^>]+>               { include_count++; }
+"#include"[ \t]*\"[^\"]+\"            { include_count++; }
+.|\n                                 ; // Ignore all other characters and new lines
+
+%%
+
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <filename>\n", argv[0]);
+        return 1;
+    }
+
+    FILE *file = fopen(argv[1], "r");
+    if (!file) {
+        perror("Could not open file");
+        return 1;
+    }
+
+    yyin = file;
+    yylex();
+
+    printf("Number of macros defined: %d\n", macro_count);
+    printf("Number of header files included: %d\n", include_count);
+
+    fclose(file);
+    return 0;
+}

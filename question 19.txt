@@ -1,0 +1,31 @@
+%{
+#include <stdio.h>
+%}
+
+%%
+
+<!--[^\n]*-->                ; // Ignore HTML comments
+<!DOCTYPE[^>]*>             ; // Ignore DOCTYPE declarations
+<[^>]+>                     { printf("HTML tag: %s\n", yytext); } // Print HTML tags
+.|\n                        ; // Ignore all other characters and new lines
+
+%%
+
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <filename>\n", argv[0]);
+        return 1;
+    }
+
+    FILE *file = fopen(argv[1], "r");
+    if (!file) {
+        perror("Could not open file");
+        return 1;
+    }
+
+    yyin = file;
+    yylex();
+
+    fclose(file);
+    return 0;
+}

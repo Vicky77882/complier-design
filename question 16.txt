@@ -1,0 +1,48 @@
+%{
+#include <stdio.h>
+#include <ctype.h>
+
+int char_count = 0;
+int line_count = 0;
+int word_count = 0;
+
+void update_counts(char *yytext);
+%}
+
+%%
+
+[\t ]+                ; // Ignore tabs and spaces
+\n                    { line_count++; char_count++; } // Count new lines
+\/\/[^\n]*            ; // Ignore single-line comments
+\/\*([^*]|\*+[^*/])*\*\/  ; // Ignore multi-line comments
+[a-zA-Z_][a-zA-Z0-9_]*  { word_count++; update_counts(yytext); } // Count words and characters
+.                     { char_count++; } // Count other characters
+
+%%
+
+void update_counts(char *yytext) {
+    char_count += strlen(yytext);
+}
+
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <filename>\n", argv[0]);
+        return 1;
+    }
+
+    FILE *file = fopen(argv[1], "r");
+    if (!file) {
+        perror("Could not open file");
+        return 1;
+    }
+
+    yyin = file;
+    yylex();
+
+    printf("Number of characters: %d\n", char_count);
+    printf("Number of lines: %d\n", line_count);
+    printf("Number of words: %d\n", word_count);
+
+    fclose(file);
+    return 0;
+}
